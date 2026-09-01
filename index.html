@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>To Beck</title>
+<style>
+  :root{
+    --bg: #FFF4F7;
+    --ink: #4A3B34;
+    --pink: #FF8FAE;
+    --pink-soft: #FFC2D1;
+    --yellow: #FFD35C;
+    --sky: #6FC3FF;
+    --mint: #7FE0B8;
+    --lilac: #C9A6FF;
+    --white: #FFFFFF;
+  }
+
+  *{ box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
+  html,body{ height:100%; }
+  body{
+    margin:0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: Calibri, "DengXian", sans-serif;
+    -webkit-font-smoothing: antialiased;
+    overflow-x:hidden;
+  }
+
+  .stage{
+    position:relative; min-height:100vh; display:flex; align-items:center; justify-content:center;
+    overflow:hidden; padding: 34px 20px;
+  }
+
+  /* ---------- 背景暈染 + 貼紙裝飾 ---------- */
+
+  .ambient{ position:absolute; inset:0; pointer-events:none; z-index:0; }
+  .ambient span{ position:absolute; border-radius:50%; filter: blur(50px); opacity:.35; animation: driftBlob 17s ease-in-out infinite alternate; }
+  .ambient span:nth-child(1){ width:220px; height:220px; background:var(--yellow); top:4%; left:2%; }
+  .ambient span:nth-child(2){ width:200px; height:200px; background:var(--sky); top:66%; left:82%; animation-delay:-5s; }
+  .ambient span:nth-child(3){ width:170px; height:170px; background:var(--mint); top:80%; left:4%; animation-delay:-10s; }
+  @keyframes driftBlob{ from{ transform:translate(0,0);} to{ transform:translate(14px,-18px);} }
+
+  .deco{ position:absolute; pointer-events:none; z-index:1; animation: floaty 4.5s ease-in-out infinite; }
+  @keyframes floaty{ 0%,100%{ transform:translateY(0) rotate(0deg);} 50%{ transform:translateY(-10px) rotate(8deg);} }
+
+  .deco-star{
+    width:22px; height:22px;
+    clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+  }
+  .deco-heart{ width:20px; height:18px; position:absolute; }
+  .deco-heart::before, .deco-heart::after{
+    content:""; position:absolute; top:0; width:11px; height:16px; background:inherit; border-radius:10px 10px 0 0;
+  }
+  .deco-heart::before{ left:10px; transform: rotate(-45deg); transform-origin:0 100%; }
+  .deco-heart::after{ left:0; transform: rotate(45deg); transform-origin:100% 100%; }
+
+  .deco-cloud{ width:34px; height:16px; background:#fff; border-radius:10px; }
+  .deco-cloud::before{ content:""; position:absolute; width:16px; height:16px; background:#fff; border-radius:50%; top:-8px; left:4px; }
+  .deco-cloud::after{ content:""; position:absolute; width:18px; height:18px; background:#fff; border-radius:50%; top:-10px; left:16px; }
+
+  /* ---------- 畫面容器 ---------- */
+
+  .screen{
+    display:none; flex-direction:column; align-items:center; justify-content:center;
+    width:100%; max-width:420px; text-align:center; position:relative; z-index:2;
+    animation: screenIn .55s ease;
+  }
+  .screen.active{ display:flex; }
+  @keyframes screenIn{ from{ opacity:0; transform:translateY(12px) scale(.98);} to{ opacity:1; transform:translateY(0) scale(1);} }
+
+  h1.eyebrow{
+    font-family:Calibri, "DengXian", sans-serif;
+    font-size:22px; margin:0 0 18px; color:var(--ink);
+  }
+
+  .hint{ margin-top:18px; color:var(--ink); opacity:.6; font-size:13px; }
+
+  /* ---------- 吉祥物貓咪 ---------- */
+
+  .mascot-box{ display:flex; flex-direction:column; align-items:center; gap:12px; margin-bottom:18px; }
+
+  .bubble-speech{
+    position:relative; background:var(--white); border:4px solid var(--ink); border-radius:18px;
+    padding:11px 18px; font-family:Calibri, "DengXian", sans-serif; font-size:14.5px; color:var(--ink);
+    box-shadow:5px 5px 0 var(--ink); max-width:270px;
+  }
+  .bubble-speech::after{
+    content:""; position:absolute; left:50%; bottom:-15px; transform:translateX(-50%);
+    border-width:15px 10px 0; border-style:solid; border-color: var(--ink) transparent transparent;
+  }
+  .bubble-speech::before{
+    content:""; position:absolute; left:50%; bottom:-10px; transform:translateX(-50%); z-index:1;
+    border-width:11px 8px 0; border-style:solid; border-color: var(--white) transparent transparent;
+  }
+
+  .mascot{ width:100px; height:100px; animation: mascotBob 3.2s ease-in-out infinite; }
+  @keyframes mascotBob{ 0%,100%{ transform:translateY(0) rotate(0deg);} 50%{ transform:translateY(-6px) rotate(-3deg);} }
+  .mascot.big{ width:120px; height:120px; }
+  .mascot.cheer{ animation: mascotCheer 1.1s ease-in-out infinite; }
+  @keyframes mascotCheer{ 0%,100%{ transform:translateY(0) rotate(-4deg);} 50%{ transform:translateY(-12px) rotate(4deg);} }
+
+  /* ---------- 按鈕 & 卡片共用貼紙感樣式 ---------- */
+
+  button.action{
+    font-family:Calibri, "DengXian", sans-serif; font-size:16px;
+    padding:13px 32px; border-radius:999px; border:4px solid var(--ink);
+    background: var(--pink); color:var(--ink); cursor:pointer;
+    box-shadow:5px 5px 0 var(--ink);
+    transition: transform .12s ease, box-shadow .12s ease, opacity .2s ease;
+  }
+  button.action:active{ transform: translate(4px,4px); box-shadow:1px 1px 0 var(--ink); }
+  button.action:focus-visible{ outline:3px solid var(--sky); outline-offset:3px; }
+  button.action.disabled{ opacity:.35; pointer-events:none; }
+
+  button.ghost{
+    background:none; border:none; color:var(--ink); opacity:.6; font-family:Calibri, "DengXian", sans-serif;
+    font-size:13px; cursor:pointer; padding:10px; margin-top:8px; text-decoration:underline; text-underline-offset:3px;
+  }
+  button.ghost:focus-visible{ outline:2px solid var(--sky); outline-offset:2px; }
+
+  /* ---------- 畫面一：開場 ---------- */
+
+  #intro-screen .mascot{ width:130px; height:130px; }
+
+  /* ---------- 畫面二：禮物盒 ---------- */
+
+  .gift-wrap{ position:relative; width:230px; height:230px; margin:6px auto 0; }
+
+  .burst{
+    position:absolute; inset:-50px; border-radius:50%;
+    background: radial-gradient(circle, rgba(255,143,174,.55), transparent 70%);
+    opacity:0; transform:scale(.4); pointer-events:none; z-index:0;
+  }
+  .burst.active{ animation: burstAnim .7s ease forwards; }
+  @keyframes burstAnim{ from{opacity:0; transform:scale(.4);} 40%{opacity:.9;} to{opacity:0; transform:scale(1.7);} }
+
+  .gift-box{
+    position:absolute; inset:0; border-radius:20px; z-index:1;
+    background:
+      radial-gradient(circle, var(--pink-soft) 16%, transparent 17%) 0 0/28px 28px,
+      var(--sky);
+    border:5px solid var(--ink);
+    box-shadow: 6px 6px 0 var(--ink);
+    transition: transform .5s ease, opacity .5s ease;
+  }
+  .gift-box.opened{ transform: scale(1.08) rotate(2deg); opacity:0; }
+
+  .ribbon{
+    position:absolute; top:-5px; left:50%; width:44px; height:calc(100% + 10px);
+    transform:translate(-50%,0); background: var(--yellow);
+    border:5px solid var(--ink); border-radius:8px; cursor: grab; z-index:3;
+    touch-action:none; transition: transform .3s ease, opacity .3s ease;
+    box-shadow: 4px 4px 0 var(--ink);
+  }
+  .ribbon.dragging{ cursor: grabbing; transition:none; }
+
+  .bow{ position:absolute; top:-30px; left:50%; transform:translateX(-50%); width:84px; height:42px; z-index:4; pointer-events:none; }
+  .bow::before, .bow::after{
+    content:""; position:absolute; top:4px; width:36px; height:28px;
+    background: var(--pink); border:4px solid var(--ink); border-radius:50% 50% 50% 6px;
+  }
+  .bow::before{ left:0; transform: rotate(-16deg); }
+  .bow::after{ right:0; transform: rotate(16deg) scaleX(-1); }
+  .bow-knot{
+    position:absolute; top:10px; left:50%; transform:translateX(-50%);
+    width:18px; height:18px; border-radius:5px; background:var(--yellow); border:4px solid var(--ink); z-index:5;
+  }
+
+  /* ---------- 畫面三：刮刮樂 ---------- */
+
+  .scratch-wrap{
+    position:relative; width:100%; max-width:320px; border-radius:20px;
+    overflow:hidden; margin:0 auto; border:5px solid var(--ink); box-shadow:6px 6px 0 var(--ink);
+  }
+  .poem-layer{
+    padding: 30px 24px; min-height:230px; display:flex; flex-direction:column; justify-content:center;
+    background: var(--white);
+  }
+  .poem-layer p{
+    font-family:Calibri, "DengXian", sans-serif; font-size:15px; line-height:2;
+    margin:0 0 11px; text-align:left; color:var(--ink);
+  }
+  .poem-layer p:last-child{ margin-bottom:0; }
+  .poem-layer .lead{
+    font-weight:600;
+  }
+
+  #scratch-canvas{ position:absolute; inset:0; touch-action:none; cursor:pointer; }
+
+  /* ---------- 畫面四：連擊泡泡 ---------- */
+
+  .combo-counter{
+    font-family:Calibri, "DengXian", sans-serif; font-size:17px;
+    color: var(--ink); background:var(--yellow); border:4px solid var(--ink); border-radius:999px;
+    padding:5px 18px; margin-bottom:14px; opacity:0; transform:scale(.8) rotate(-3deg);
+    box-shadow:4px 4px 0 var(--ink);
+  }
+  .combo-counter.pop{ animation: comboPop .45s ease; }
+  @keyframes comboPop{
+    0%{ opacity:0; transform:scale(.7) rotate(-3deg);}
+    35%{ opacity:1; transform:scale(1.3) rotate(3deg);}
+    100%{ opacity:1; transform:scale(1) rotate(-3deg);}
+  }
+
+  .bubble-field{ position:relative; width:100%; max-width:330px; height:270px; margin:0 auto; }
+
+  .bubble{
+    position:absolute; width:62px; height:62px; border-radius:50%;
+    border:4px solid var(--ink); font-family:Calibri, "DengXian", sans-serif; font-size:13px;
+    color:var(--ink); cursor:pointer; display:flex; align-items:center; justify-content:center;
+    box-shadow: 4px 4px 0 var(--ink);
+    animation: bob 3.6s ease-in-out infinite;
+    transition: transform .2s ease, opacity .2s ease, box-shadow .2s ease;
+  }
+  .bubble:nth-child(4n+1){ background: var(--pink); }
+  .bubble:nth-child(4n+2){ background: var(--yellow); }
+  .bubble:nth-child(4n+3){ background: var(--mint); }
+  .bubble:nth-child(4n+4){ background: var(--sky); }
+  .bubble:active{ transform: scale(.92); box-shadow:2px 2px 0 var(--ink); }
+  .bubble.popped{ transform: scale(0) rotate(30deg); opacity:0; pointer-events:none; }
+  .bubble:focus-visible{ outline:3px solid var(--ink); outline-offset:3px; }
+  @keyframes bob{ 0%,100%{ transform:translateY(0);} 50%{ transform:translateY(-9px);} }
+
+  .burst-bit{ position:absolute; border-radius:2px; pointer-events:none; animation: burstOut .6s ease-out forwards; z-index:5; }
+  @keyframes burstOut{ from{ transform:translate(0,0) scale(1); opacity:1;} to{ transform:translate(var(--tx), var(--ty)) scale(.3); opacity:0;} }
+
+  .collected{
+    min-height:32px; display:flex; flex-wrap:wrap; gap:8px; justify-content:center;
+    margin: 16px 0 22px; max-width:320px;
+  }
+  .collected .tag{
+    font-size:12.5px; font-family:Calibri, "DengXian", sans-serif; padding:6px 14px; border-radius:999px;
+    border:3px solid var(--ink); color:var(--ink); background:var(--white);
+    box-shadow:2px 2px 0 var(--ink);
+    animation: tagIn .35s ease;
+  }
+  @keyframes tagIn{ from{ opacity:0; transform:translateY(6px) scale(.8);} to{ opacity:1; transform:translateY(0) scale(1);} }
+
+  /* ---------- 畫面五：結尾 ---------- */
+
+  #final-screen{ position:relative; min-height:300px; }
+  .confetti-layer{ position:absolute; inset:-6% -10% -6% -10%; pointer-events:none; overflow:hidden; z-index:0; }
+  .confetti-piece{
+    position:absolute; top:-8%; opacity:.95;
+    animation-name: confettiFall; animation-timing-function: linear; animation-fill-mode:forwards; z-index:0;
+  }
+  @keyframes confettiFall{
+    0%{ top:-8%; transform: translateX(0) rotate(0deg); opacity:1; }
+    100%{ top:110%; transform: translateX(var(--drift,20px)) rotate(var(--spin,360deg)); opacity:.9; }
+  }
+
+  .final-card{
+    position:relative; z-index:1; background:var(--white); border:5px solid var(--ink); border-radius:22px;
+    padding:28px 26px; box-shadow:6px 6px 0 var(--ink); max-width:320px;
+  }
+  .final-text{
+    font-family:Calibri, "DengXian", sans-serif; font-size:16px; line-height:2; margin:0; color:var(--ink);
+  }
+  .signoff{
+    display:inline-block; margin-top:18px; font-family:Calibri, "DengXian", sans-serif; font-size:14px;
+    letter-spacing:.06em; color:var(--ink); background:var(--yellow); border:3px solid var(--ink);
+    border-radius:999px; padding:6px 18px; transform: rotate(-3deg); box-shadow:3px 3px 0 var(--ink);
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .ambient span, .deco, .bubble, .mascot, .confetti-piece{ animation: none; }
+    .screen{ animation:none; }
+    .ribbon{ transition:none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="stage">
+  <div class="ambient" aria-hidden="true"><span></span><span></span><span></span></div>
+
+  <!-- 畫面一：開場 -->
+  <div id="intro-screen" class="screen active">
+    <div class="deco deco-star" style="top:8%; left:10%; background:var(--yellow); animation-delay:.2s;"></div>
+    <div class="deco deco-heart" style="top:14%; right:10%; background:var(--pink); animation-delay:.9s;"></div>
+    <div class="deco deco-cloud" style="bottom:10%; left:8%; animation-delay:.5s;"></div>
+
+    <div class="mascot-box">
+      <svg class="mascot" viewBox="0 0 120 120" aria-hidden="true">
+        <ellipse cx="13" cy="62" rx="10" ry="16" fill="#F4F3F1" stroke="#4A3B34" stroke-width="3"/>
+        <ellipse cx="107" cy="62" rx="10" ry="16" fill="#F4F3F1" stroke="#4A3B34" stroke-width="3"/>
+        <path d="M20,36 Q10,20 32,14 Q40,26 28,40 Z" fill="#E7E4DD" stroke="#4A3B34" stroke-width="4" stroke-linejoin="round"/>
+        <path d="M100,36 Q110,20 88,14 Q80,26 92,40 Z" fill="#E7E4DD" stroke="#4A3B34" stroke-width="4" stroke-linejoin="round"/>
+        <path d="M25,32 Q22,24 31,21" fill="none" stroke="#4A3B34" stroke-width="2.5" stroke-linecap="round" opacity=".5"/>
+        <path d="M95,32 Q98,24 89,21" fill="none" stroke="#4A3B34" stroke-width="2.5" stroke-linecap="round" opacity=".5"/>
+        <circle cx="60" cy="66" r="46" fill="#F4F3F1" stroke="#4A3B34" stroke-width="4"/>
+        <path d="M60,28 L52,44 L60,40 L68,44 Z" fill="#B9B6AF" opacity=".55"/>
+        <path d="M40,36 Q46,32 50,40" stroke="#B9B6AF" stroke-width="4" fill="none" stroke-linecap="round" opacity=".55"/>
+        <path d="M80,36 Q74,32 70,40" stroke="#B9B6AF" stroke-width="4" fill="none" stroke-linecap="round" opacity=".55"/>
+        <ellipse cx="30" cy="80" rx="10" ry="7" fill="#FFFFFF" opacity=".7"/>
+        <ellipse cx="90" cy="80" rx="10" ry="7" fill="#FFFFFF" opacity=".7"/>
+        <ellipse cx="42" cy="66" rx="12" ry="13" fill="#D9DE7A" stroke="#4A3B34" stroke-width="4"/>
+        <ellipse cx="78" cy="66" rx="12" ry="13" fill="#D9DE7A" stroke="#4A3B34" stroke-width="4"/>
+        <ellipse cx="42" cy="67" rx="2.6" ry="9" fill="#20140F"/>
+        <ellipse cx="78" cy="67" rx="2.6" ry="9" fill="#20140F"/>
+        <circle cx="38" cy="61" r="2" fill="#fff"/>
+        <circle cx="74" cy="61" r="2" fill="#fff"/>
+        <path d="M56,82 L64,82 L60,87 Z" fill="#F0A98D"/>
+        <path d="M48,88 Q60,102 72,88 Q66,98 60,98 Q54,98 48,88 Z" fill="#4A3B34"/>
+        <path d="M52,90 Q60,103 68,90 Q64,96 60,96 Q56,96 52,90 Z" fill="#FF8FAE" stroke="#4A3B34" stroke-width="2" stroke-linejoin="round"/>
+        <line x1="2" y1="74" x2="29" y2="72" stroke="#4A3B34" stroke-width="2" opacity=".5"/>
+        <line x1="0" y1="82" x2="29" y2="82" stroke="#4A3B34" stroke-width="2" opacity=".5"/>
+        <line x1="2" y1="90" x2="29" y2="88" stroke="#4A3B34" stroke-width="2" opacity=".5"/>
+        <line x1="118" y1="74" x2="91" y2="72" stroke="#4A3B34" stroke-width="2" opacity=".5"/>
+        <line x1="120" y1="82" x2="91" y2="82" stroke="#4A3B34" stroke-width="2" opacity=".5"/>
+        <line x1="118" y1="90" x2="91" y2="88" stroke="#4A3B34" stroke-width="2" opacity=".5"/>
+      </svg>
+    </div>
+    <button id="intro-start" class="action" type="button">Tap to Start</button>
+  </div>
+
+  <!-- 畫面二：禮物盒 -->
+  <div id="gift-screen" class="screen">
+    <div class="deco deco-star" style="top:4%; right:8%; background:var(--sky); animation-delay:.3s;"></div>
+    <div class="deco deco-heart" style="bottom:6%; left:6%; background:var(--pink); animation-delay:1s;"></div>
+    <h1 class="eyebrow">給嫚嫚</h1>
+    <div class="gift-wrap">
+      <div class="burst" id="burst"></div>
+      <div class="gift-box" id="gift-box"></div>
+      <div class="bow" aria-hidden="true"><span class="bow-knot"></span></div>
+      <div class="ribbon" id="ribbon" role="button" tabindex="0" aria-label="拉開緞帶，打開禮物"></div>
+    </div>
+    <p class="hint">Pull down to open ↓</p>
+  </div>
+
+  <!-- 畫面三：刮刮樂 -->
+  <div id="scratch-screen" class="screen">
+    <div class="deco deco-star" style="top:2%; left:6%; background:var(--pink); animation-delay:.1s;"></div>
+    <h1 class="eyebrow">Scratch to Reveal</h1>
+    <div class="scratch-wrap" id="scratch-wrap">
+      <div class="poem-layer">
+        <p><span class="lead">有</span>一件事，一直放在心裡，想找機會好好說出來</p>
+        <p><span class="lead">妳</span>的出現，讓日子多了不一樣的溫度</p>
+        <p><span class="lead">在</span>忙碌與疲憊裡，只要想到妳，心就會慢慢靜下來</p>
+        <p><span class="lead">是</span>妳的體貼和陪伴，讓我學會什麼叫被好好珍惜</p>
+        <p><span class="lead">很</span>多微不足道的小事，因為有人分享，才顯得特別</p>
+        <p><span class="lead">棒</span>的從來不是運氣，而是能遇見這樣用心生活的人</p>
+        <p><span class="lead">的</span>確，這陣子想了想，能認識妳，就是最好的事情之一</p>
+        <p><span class="lead">事</span>情再小，妳都認真對待，喜歡這種態度的妳</p>
+        <p><span class="lead">情</span>話太多了哈哈哈，不過謝謝妳，一直都在</p>
+      </div>
+      <canvas id="scratch-canvas"></canvas>
+    </div>
+    <button id="scratch-next" class="action disabled" type="button" style="margin-top:20px;">Continue</button>
+    <button id="scratch-skip" class="ghost" type="button">Skip</button>
+  </div>
+
+  <!-- 畫面四：連擊泡泡 -->
+  <div id="combo-screen" class="screen">
+    <h1 class="eyebrow">妳是這樣的人</h1>
+    <div class="combo-counter" id="combo-counter">COMBO ×0</div>
+    <div class="bubble-field" id="bubble-field">
+      <button class="bubble" type="button" data-word="溫柔" style="left:6%; top:6%; animation-delay:.1s;">溫柔</button>
+      <button class="bubble" type="button" data-word="天真" style="left:60%; top:2%; animation-delay:.5s;">聰明</button>
+      <button class="bubble" type="button" data-word="體貼" style="left:30%; top:32%; animation-delay:.9s;">體貼</button>
+      <button class="bubble" type="button" data-word="愛笑" style="left:74%; top:36%; animation-delay:.3s;">愛笑</button>
+      <button class="bubble" type="button" data-word="堅強" style="left:2%; top:60%; animation-delay:1.1s;">堅強</button>
+      <button class="bubble" type="button" data-word="善良" style="left:52%; top:64%; animation-delay:.7s;">善良</button>
+      <button class="bubble" type="button" data-word="可愛" style="left:78%; top:74%; animation-delay:1.3s;">可愛</button>
+      <button class="bubble" type="button" data-word="努力" style="left:24%; top:80%; animation-delay:.2s;">努力</button>
+    </div>
+    <div class="collected" id="collected-list" aria-live="polite"></div>
+    <button id="combo-next" class="action disabled" type="button">Continue</button>
+  </div>
+
+  <!-- 畫面五：結尾 -->
+  <div id="final-screen" class="screen">
+    <div class="confetti-layer" id="confetti-layer" aria-hidden="true"></div>
+    <div class="mascot-box">
+      <svg class="mascot big cheer" viewBox="0 0 120 120" aria-hidden="true">
+        <ellipse cx="13" cy="62" rx="10" ry="16" fill="#F4F3F1" stroke="#4A3B34" stroke-width="3"/>
+        <ellipse cx="107" cy="62" rx="10" ry="16" fill="#F4F3F1" stroke="#4A3B34" stroke-width="3"/>
+        <path d="M20,36 Q10,20 32,14 Q40,26 28,40 Z" fill="#E7E4DD" stroke="#4A3B34" stroke-width="4" stroke-linejoin="round"/>
+        <path d="M100,36 Q110,20 88,14 Q80,26 92,40 Z" fill="#E7E4DD" stroke="#4A3B34" stroke-width="4" stroke-linejoin="round"/>
+        <path d="M25,32 Q22,24 31,21" fill="none" stroke="#4A3B34" stroke-width="2.5" stroke-linecap="round" opacity=".5"/>
+        <path d="M95,32 Q98,24 89,21" fill="none" stroke="#4A3B34" stroke-width="2.5" stroke-linecap="round" opacity=".5"/>
+        <circle cx="60" cy="66" r="46" fill="#F4F3F1" stroke="#4A3B34" stroke-width="4"/>
+        <path d="M60,28 L52,44 L60,40 L68,44 Z" fill="#B9B6AF" opacity=".55"/>
+        <path d="M40,36 Q46,32 50,40" stroke="#B9B6AF" stroke-width="4" fill="none" stroke-linecap="round" opacity=".55"/>
+        <path d="M80,36 Q74,32 70,40" stroke="#B9B6AF" stroke-width="4" fill="none" stroke-linecap="round" opacity=".55"/>
+        <ellipse cx="30" cy="80" rx="10" ry="7" fill="#FFFFFF" opacity=".7"/>
+        <ellipse cx="90" cy="80" rx="10" ry="7" fill="#FFFFFF" opacity=".7"/>
+        <ellipse cx="42" cy="62" rx="12" ry="14" fill="#D9DE7A" stroke="#4A3B34" stroke-width="4"/>
+        <ellipse cx="78" cy="62" rx="12" ry="14" fill="#D9DE7A" stroke="#4A3B34" stroke-width="4"/>
+        <ellipse cx="42" cy="63" rx="2.6" ry="9" fill="#20140F"/>
+        <ellipse cx="78" cy="63" rx="2.6" ry="9" fill="#20140F"/>
+        <circle cx="38" cy="56" r="2" fill="#fff"/>
+        <circle cx="74" cy="56" r="2" fill="#fff"/>
+        <path d="M56,80 L64,80 L60,85 Z" fill="#F0A98D"/>
+        <path d="M48,86 Q60,102 72,86 Q66,97 60,97 Q54,97 48,86 Z" fill="#4A3B34"/>
+        <path d="M52,88 Q60,103 68,88 Q64,95 60,95 Q56,95 52,88 Z" fill="#FF8FAE" stroke="#4A3B34" stroke-width="2" stroke-linejoin="round"/>
+        <line x1="2" y1="72" x2="29" y2="70" stroke="#4A3B34" stroke-width="2" opacity=".5"/>
+        <line x1="0" y1="80" x2="29" y2="80" stroke="#4A3B34" stroke-width="2" opacity=".5"/>
+        <line x1="2" y1="88" x2="29" y2="86" stroke="#4A3B34" stroke-width="2" opacity=".5"/>
+        <line x1="118" y1="72" x2="91" y2="70" stroke="#4A3B34" stroke-width="2" opacity=".5"/>
+        <line x1="120" y1="80" x2="91" y2="80" stroke="#4A3B34" stroke-width="2" opacity=".5"/>
+        <line x1="118" y1="88" x2="91" y2="86" stroke="#4A3B34" stroke-width="2" opacity=".5"/>
+      </svg>
+    </div>
+    <div class="final-card">
+      <p class="final-text">
+        嫚達，<br>
+        這些都不是我隨口說的，<br>
+        是我每天，真的都感覺得到的事。<br><br>
+        謝謝妳，點綴ㄌ我平凡的日子。
+      </p>
+      <span class="signoff">SURPRISE #1</span>
+    </div>
+  </div>
+</div>
+
+<script>
+  function switchScreen(fromId, toId){
+    document.getElementById(fromId).classList.remove('active');
+    document.getElementById(toId).classList.add('active');
+  }
+
+  /* ---------- 畫面一：開場 ---------- */
+  document.getElementById('intro-start').addEventListener('click', () => {
+    switchScreen('intro-screen', 'gift-screen');
+  });
+
+  /* ---------- 畫面二：拉緞帶 ---------- */
+  const ribbon = document.getElementById('ribbon');
+  const giftBox = document.getElementById('gift-box');
+  const burst = document.getElementById('burst');
+  const maxDrag = 90;
+  const threshold = 68;
+  let dragActive = false, startY = 0, dy = 0, giftOpened = false;
+
+  ribbon.addEventListener('pointerdown', (e) => {
+    if (giftOpened) return;
+    dragActive = true; startY = e.clientY;
+    ribbon.classList.add('dragging');
+    ribbon.setPointerCapture(e.pointerId);
+  });
+  ribbon.addEventListener('pointermove', (e) => {
+    if (!dragActive) return;
+    dy = Math.min(Math.max(e.clientY - startY, 0), maxDrag);
+    ribbon.style.transform = `translate(-50%, ${dy}px)`;
+    ribbon.style.opacity = String(1 - dy / (maxDrag * 1.6));
+  });
+  function endDrag(){
+    if (!dragActive) return;
+    dragActive = false;
+    ribbon.classList.remove('dragging');
+    if (dy > threshold){
+      openGift();
+    } else {
+      ribbon.style.transform = 'translate(-50%, 0px)';
+      ribbon.style.opacity = '1';
+    }
+    dy = 0;
+  }
+  ribbon.addEventListener('pointerup', endDrag);
+  ribbon.addEventListener('pointercancel', endDrag);
+  ribbon.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); openGift(); }
+  });
+
+  function openGift(){
+    if (giftOpened) return;
+    giftOpened = true;
+    giftBox.classList.add('opened');
+    burst.classList.add('active');
+    ribbon.style.opacity = '0';
+    setTimeout(() => {
+      switchScreen('gift-screen', 'scratch-screen');
+      initScratch();
+    }, 550);
+  }
+
+  /* ---------- 畫面三：刮刮樂 ---------- */
+  let scratchCtx = null, scratching = false, lastPoint = null, lastCheck = 0, revealed = false;
+
+  function initScratch(){
+    const wrap = document.getElementById('scratch-wrap');
+    const canvas = document.getElementById('scratch-canvas');
+    const dpr = window.devicePixelRatio || 1;
+    const rect = wrap.getBoundingClientRect();
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    canvas.style.width = rect.width + 'px';
+    canvas.style.height = rect.height + 'px';
+    const ctx = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+
+    const grad = ctx.createLinearGradient(0, 0, rect.width, rect.height);
+    grad.addColorStop(0, '#FFD35C');
+    grad.addColorStop(1, '#FF8FAE');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, rect.width, rect.height);
+    ctx.fillStyle = 'rgba(74,59,52,.55)';
+    ctx.font = '400 15px Calibri, "DengXian", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Scratch here ✨', rect.width / 2, rect.height / 2);
+
+    scratchCtx = ctx;
+    canvas.style.opacity = '1';
+    canvas.style.display = 'block';
+    canvas.style.pointerEvents = 'auto';
+    revealed = false;
+    lastPoint = null;
+
+    function getPos(e){
+      const r = canvas.getBoundingClientRect();
+      return { x: e.clientX - r.left, y: e.clientY - r.top };
+    }
+    function scratchAt(x, y){
+      ctx.globalCompositeOperation = 'destination-out';
+      ctx.beginPath();
+      ctx.arc(x, y, 22, 0, Math.PI * 2);
+      ctx.fill();
+      if (lastPoint){
+        ctx.lineWidth = 44;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(lastPoint.x, lastPoint.y);
+        ctx.lineTo(x, y);
+        ctx.stroke();
+      }
+      lastPoint = { x, y };
+    }
+    function checkReveal(){
+      const now = performance.now();
+      if (now - lastCheck < 180) return;
+      lastCheck = now;
+      const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+      let total = 0, clear = 0;
+      for (let i = 3; i < data.length; i += 40){
+        total++;
+        if (data[i] === 0) clear++;
+      }
+      if (total > 0 && clear / total > 0.5) revealScratch();
+    }
+
+    canvas.onpointerdown = (e) => {
+      scratching = true;
+      canvas.setPointerCapture(e.pointerId);
+      const p = getPos(e);
+      scratchAt(p.x, p.y);
+    };
+    canvas.onpointermove = (e) => {
+      if (!scratching || revealed) return;
+      const p = getPos(e);
+      scratchAt(p.x, p.y);
+      checkReveal();
+    };
+    canvas.onpointerup = () => { scratching = false; lastPoint = null; };
+    canvas.onpointerleave = () => { scratching = false; lastPoint = null; };
+  }
+
+  function revealScratch(){
+    revealed = true;
+    const canvas = document.getElementById('scratch-canvas');
+    canvas.style.transition = 'opacity .6s ease';
+    canvas.style.opacity = '0';
+    canvas.style.pointerEvents = 'none';
+    document.getElementById('scratch-next').classList.remove('disabled');
+  }
+
+  document.getElementById('scratch-skip').addEventListener('click', () => {
+    if (scratchCtx){
+      const canvas = document.getElementById('scratch-canvas');
+      scratchCtx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+    revealScratch();
+  });
+
+  document.getElementById('scratch-next').addEventListener('click', (e) => {
+    if (e.currentTarget.classList.contains('disabled')) return;
+    switchScreen('scratch-screen', 'combo-screen');
+  });
+
+  /* ---------- 畫面四：連擊泡泡 ---------- */
+  const bubbles = Array.from(document.querySelectorAll('.bubble'));
+  const bubbleField = document.getElementById('bubble-field');
+  const comboCounter = document.getElementById('combo-counter');
+  const collectedList = document.getElementById('collected-list');
+  const comboNext = document.getElementById('combo-next');
+  const burstColors = ['#FF8FAE', '#FFD35C', '#7FE0B8', '#6FC3FF', '#C9A6FF'];
+  let combo = 0, lastTap = 0, collectedCount = 0;
+
+  function burstAt(cx, cy){
+    for (let i = 0; i < 7; i++){
+      const bit = document.createElement('span');
+      bit.className = 'burst-bit';
+      const size = 5 + Math.random() * 4;
+      bit.style.width = size + 'px';
+      bit.style.height = size + 'px';
+      bit.style.left = cx + 'px';
+      bit.style.top = cy + 'px';
+      bit.style.background = burstColors[i % burstColors.length];
+      const angle = Math.random() * Math.PI * 2;
+      const dist = 32 + Math.random() * 26;
+      bit.style.setProperty('--tx', Math.cos(angle) * dist + 'px');
+      bit.style.setProperty('--ty', Math.sin(angle) * dist + 'px');
+      bubbleField.appendChild(bit);
+      setTimeout(() => bit.remove(), 650);
+    }
+  }
+
+  bubbles.forEach((bubble) => {
+    bubble.addEventListener('click', () => {
+      if (bubble.classList.contains('popped')) return;
+
+      const cx = bubble.offsetLeft + bubble.offsetWidth / 2;
+      const cy = bubble.offsetTop + bubble.offsetHeight / 2;
+      burstAt(cx, cy);
+
+      bubble.classList.add('popped');
+      collectedCount++;
+
+      const now = Date.now();
+      combo = (now - lastTap < 1400) ? combo + 1 : 1;
+      lastTap = now;
+
+      comboCounter.textContent = 'COMBO ×' + combo;
+      comboCounter.style.opacity = '1';
+      comboCounter.classList.remove('pop');
+      void comboCounter.offsetWidth;
+      comboCounter.classList.add('pop');
+
+      const tag = document.createElement('span');
+      tag.className = 'tag';
+      tag.textContent = bubble.dataset.word;
+      collectedList.appendChild(tag);
+
+      if (collectedCount === bubbles.length){
+        comboNext.classList.remove('disabled');
+      }
+    });
+  });
+
+  comboNext.addEventListener('click', (e) => {
+    if (e.currentTarget.classList.contains('disabled')) return;
+    switchScreen('combo-screen', 'final-screen');
+    spawnConfetti();
+  });
+
+  /* ---------- 畫面五：彩紙 ---------- */
+  function spawnConfetti(){
+    const container = document.getElementById('confetti-layer');
+    const colors = ['#FF8FAE', '#FFD35C', '#7FE0B8', '#6FC3FF', '#C9A6FF'];
+    for (let i = 0; i < 28; i++){
+      const piece = document.createElement('span');
+      piece.className = 'confetti-piece';
+      const isCircle = Math.random() > 0.5;
+      const w = 6 + Math.random() * 5;
+      const h = isCircle ? w : w * 1.8;
+      piece.style.width = w + 'px';
+      piece.style.height = h + 'px';
+      piece.style.background = colors[i % colors.length];
+      if (isCircle) piece.style.borderRadius = '50%';
+      piece.style.left = Math.random() * 100 + '%';
+      piece.style.setProperty('--drift', (Math.random() * 60 - 30) + 'px');
+      piece.style.setProperty('--spin', (200 + Math.random() * 360) + 'deg');
+      piece.style.animationDuration = (2.4 + Math.random() * 2.2) + 's';
+      piece.style.animationDelay = (Math.random() * 1.2) + 's';
+      container.appendChild(piece);
+    }
+  }
+</script>
+
+</body>
+</html>
